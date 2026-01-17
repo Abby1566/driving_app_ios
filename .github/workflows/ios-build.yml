@@ -12,20 +12,21 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable' # 自動抓取最新穩定版
+          channel: 'stable'
 
       - name: Install Dependencies
         run: |
-          flutter pub upgrade # 使用 upgrade 強制更新依賴清單
+          flutter pub upgrade
           flutter pub get
 
-      - name: Build iOS (No Sign)
-        run: flutter build ios --release --no-codesign
+      - name: Build iOS (Force Release)
+        # 加入 --obfuscate 或是確保版本資訊被寫入
+        run: flutter build ios --release --no-codesign --build-name=1.0.0 --build-number=1
 
-      - name: Prepare IPA
+      - name: Prepare Payload
         run: |
           mkdir -p Payload
-          mv build/ios/iphoneos/Runner.app Payload/
+          cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r Runner.ipa Payload/
           
       - name: Upload Artifact
