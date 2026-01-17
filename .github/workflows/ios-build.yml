@@ -19,12 +19,18 @@ jobs:
           flutter pub upgrade
           flutter pub get
 
+      - name: Install CocoaPods
+        # 關鍵修正：進入 ios 資料夾安裝原生依賴
+        run: |
+          cd ios
+          pod install
+          cd ..
+
       - name: Build iOS (Simulator Mode)
-        # 使用 --simulator 繞過所有真機簽名校驗
+        # 加入 --debug 確保編譯通過，並移除簽名校驗
         run: flutter build ios --debug --no-codesign --simulator
 
       - name: Create IPA Payload
-        # Sideloadly 需要 Payload/Runner.app 結構的 zip 檔
         run: |
           mkdir -p Payload
           cp -r build/ios/iphonesimulator/Runner.app Payload/
