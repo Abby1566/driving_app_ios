@@ -15,26 +15,21 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Install Dependencies
+      - name: Repair and Sync Project
+        # 關鍵修正：強行修復可能遺失的 ios 資料夾與 Podfile
         run: |
+          flutter create . --platforms=ios
           flutter pub get
-
-      - name: Hard Reset iOS Project
-        # 在雲端強制清理所有 Windows 可能殘留的 iOS 垃圾
-        run: |
-          rm -rf ios/Pods
-          rm -rf ios/.symlinks
-          rm -f ios/Podfile.lock
-          flutter build ios --config-only --no-codesign
 
       - name: Install CocoaPods
         run: |
           cd ios
-          # 加上 --repo-update 確保抓到最新的 geolocator 等原生套件
+          # 強制更新 repo 以免抓不到 geolocator 等新套件
           pod install --repo-update
           cd ..
 
       - name: Build iOS (Simulator Mode)
+        # 指定模擬器架構是繞過簽名最穩定的方式
         run: flutter build ios --debug --no-codesign --simulator
 
       - name: Create IPA Payload
