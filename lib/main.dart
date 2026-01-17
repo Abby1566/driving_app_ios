@@ -1,15 +1,18 @@
-// --- 步驟 A：導入所有必要的零件 ---
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart'; // GPS 套件
-import 'package:flutter_tts/flutter_tts.dart'; // 語音套件
-import 'package:audio_session/audio_session.dart'; // 音訊管理
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:audio_session/audio_session.dart';
+
+// 關鍵修正：確保這兩個檔案被正確導入
+import 'style_config.dart';
+import 'camera_service.dart';
 
 void main() => runApp(const DrivingApp());
 
 class DrivingApp extends StatelessWidget {
   const DrivingApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,41 +25,59 @@ class DrivingApp extends StatelessWidget {
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
-
   @override
   State<Dashboard> createState() => _DashboardState();
 }
 
 class _DashboardState extends State<Dashboard> {
-  // --- 定義變數 ---
-  double _currentSpeed = 0.0; 
-  final FlutterTts _flutterTts = FlutterTts();
+  double _currentSpeed = 0.0;
+  bool _isOverSpeed = false;
+  // 修正：確保 CameraService 已定義
+  final CameraService _cameraService = CameraService();
+  final FlutterTts _tts = FlutterTts();
 
   @override
   void initState() {
     super.initState();
-    _startTrackingSpeed(); // 啟動時開始追蹤 GPS
+    _initSystem();
   }
 
-  // --- 步驟 B：GPS 時速獲取邏輯 ---
-  Future<void> _startTrackingSpeed() async {
-    // 請求權限
-    LocationPermission permission = await Geolocator.requestPermission();
+  Future<void> _initSystem() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration(
+      avAudioSessionCategory: AVAudioSessionCategory.playback,
+      avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.duckOthers,
+    ));
     
-    if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
-      // 監聽位置與時速
-      Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.bestForNavigation,
-          distanceFilter: 0,
-        ),
-      ).listen((Position position) {
+    await _tts.setLanguage("zh-TW");
+    await _cameraService.loadCameraData();
+
+    // 關鍵修正：這裡移除了 const 關鍵字，解決圖四報錯
+    Geolocator.getPositionStream(
+      locationSettings: AppleSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 5,
+      ),
+    ).listen((Position pos) {
+      if (mounted) {
         setState(() {
-          // 將 m/s 轉換為 KM/H
-          _currentSpeed = position.speed * 3.6;
-          if (_currentSpeed < 0) _currentSpeed = 0;
+          _currentSpeed = pos.speed * 3.6;
+          _isOverSpeed = _currentSpeed > 105;
         });
-      });
+        _checkDistance(pos);
+      }
+    });
+  }
+
+  void _checkDistance(Position pos) {
+    for (var cam in _cameraService.allCameras) {
+      double dist = Geolocator.distanceBetween(pos.latitude, pos.longitude, cam.lat, cam.lng);
+      if (dist < 500 && !cam.hasAlerted) {
+        _tts.speak("注意，限速${cam.limit}");
+        cam.hasAlerted = true;
+      } else if (dist > 1000) {
+        cam.hasAlerted = false;
+      }
     }
   }
 
@@ -66,51 +87,43 @@ class _DashboardState extends State<Dashboard> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 模擬地圖背景
-          Positioned.fill(
-            child: Container(color: Colors.grey[900]),
-          ),
-
-          // 核心 UI：Liquid Glass 玻璃測速儀
+          Positioned.fill(child: Container(color: Colors.grey[900])),
           Positioned(
             left: 20,
             bottom: 40,
-            child: _buildGlassPanel(160, 160, "${_currentSpeed.toInt()}", "KM/H"),
+            child: _buildGlassPanel("${_currentSpeed.toInt()}", "KM/H"),
           ),
         ],
       ),
     );
   }
 
-  // 玻璃面板繪製函式
-  Widget _buildGlassPanel(double w, double h, String mainText, String subText) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: SizedBox(
-        width: w,
-        height: h,
-        child: Stack(
-          children: [
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.5),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
+  Widget _buildGlassPanel(String val, String unit) {
+    Color currentColor = _isOverSpeed ? GlassStyle.alertColor : GlassStyle.themeColor;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: currentColor.withAlpha(120), width: _isOverSpeed ? 2 : 0.5),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: GlassStyle.blurSigma, sigmaY: GlassStyle.blurSigma),
+          child: Container(
+            width: 170,
+            height: 170,
+            // 修正：使用 withAlpha 避免過時警告
+            color: Colors.white.withAlpha((GlassStyle.glassOpacity * 255).toInt()),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(val, style: TextStyle(fontSize: GlassStyle.speedFontSize, fontWeight: GlassStyle.speedFontWeight, color: currentColor)),
+                Text(unit, style: const TextStyle(color: Colors.white54, fontSize: 14)),
+              ],
             ),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(mainText, style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
-                  Text(subText, style: const TextStyle(fontSize: 12, color: Colors.white60)),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
