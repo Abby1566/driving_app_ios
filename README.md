@@ -1,16 +1,29 @@
-# driving_app_ios
+# 🏎️ Driving Assistant Pro (iOS Liquid Glass Edition)
 
-A new Flutter project.
+這是一款專為駕駛設計的高質感測速助理 App。採用 Flutter 開發，具備即時 GPS 時速追蹤、語音警示壓屏技術以及現代化的玻璃擬態（Glassmorphism）視覺設計。
 
-## Getting Started
+## ✨ 核心功能
+* **即時時速追蹤**：透過 `geolocator` 實現高精準度的 GPS 定位與車速換算。
+* **智慧語音警示**：整合 `flutter_tts` 與 `audio_session`，在播放音樂時能自動壓低音量（Audio Ducking）播報測速提醒。
+* **台灣測速點整合**：自動解析 CSV 數據，計算當前位置與固定式/區間測速點之距離。
+* **玻璃擬態 UI**：使用 `BackdropFilter` 與 `AnimatedContainer` 打造具備深色模式美感的玻璃儀表板。
+* **性能優化**：針對 iOS 背景執行與省電模式進行定位邏輯優化。
 
-This project is a starting point for a Flutter application.
+## 🛠️ 技術棧
+* **Framework**: Flutter (Dart)
+* **定位服務**: Geolocator
+* **語音合成**: Flutter TTS
+* **數據處理**: CSV Parser
+* **音訊管理**: Audio Session (Ducking Mode)
 
-A few resources to get you started if this is your first Flutter project:
+## 📸 視覺展示
+> **Liquid Glass Dashboard**
+> 當車速超過限速門檻時，面板邊框會從 **Cyan** 轉換為 **Red Glow** 呼吸燈效果，提升警示直覺性。
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 快速開始
+1. 確保已安裝 Flutter SDK (>= 3.10.0)。
+2. 開啟 Windows 開發者模式（若在 Windows 模擬器運行）。
+3. 執行指令：
+   ```bash
+   flutter pub get
+   flutter run
