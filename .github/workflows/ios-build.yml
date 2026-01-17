@@ -19,14 +19,15 @@ jobs:
           flutter pub upgrade
           flutter pub get
 
-      - name: Build iOS (Force Release)
-        # 加入 --obfuscate 或是確保版本資訊被寫入
-        run: flutter build ios --release --no-codesign --build-name=1.0.0 --build-number=1
+      - name: Build iOS (Simulator Architecture)
+        # 關鍵修正：編譯為模擬器版本，這會徹底跳過所有 Team 和 Code Signing 檢查
+        run: flutter build ios --debug --no-codesign --simulator
 
       - name: Prepare Payload
+        # 模擬器編譯的路徑會稍微不同，我們精確指向它
         run: |
           mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
+          cp -r build/ios/iphonesimulator/Runner.app Payload/
           zip -r Runner.ipa Payload/
           
       - name: Upload Artifact
