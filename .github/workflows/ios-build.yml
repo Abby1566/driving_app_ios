@@ -19,14 +19,12 @@ jobs:
           flutter pub upgrade
           flutter pub get
 
-      - name: Build iOS (Force ARM64 No-Sign)
-        run: |
-          flutter build ios --release --no-codesign \
-          --build-name=1.0.0 --build-number=1 \
-          --extra-gen-snapshot-options=--no-use-integer-simd \
-          --client-id-ignore
-      - name: Prepare Payload
-        # 模擬器編譯的路徑會稍微不同，我們精確指向它
+      - name: Build iOS (Simulator Mode)
+        # 使用 --simulator 繞過所有真機簽名校驗
+        run: flutter build ios --debug --no-codesign --simulator
+
+      - name: Create IPA Payload
+        # Sideloadly 需要 Payload/Runner.app 結構的 zip 檔
         run: |
           mkdir -p Payload
           cp -r build/ios/iphonesimulator/Runner.app Payload/
