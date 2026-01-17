@@ -7,12 +7,12 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4 # 升級到 v4
+      - uses: actions/checkout@v4
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.0'
+          flutter-version: '3.24.0' # 提高版本以符合 pubspec.yaml 的要求
           channel: 'stable'
 
       - name: Install Dependencies
@@ -28,7 +28,7 @@ jobs:
           zip -r Runner.ipa Payload/
           
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4 # 關鍵修正：升級到 v4 以符合 GitHub 新規定
+        uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: Runner.ipa
