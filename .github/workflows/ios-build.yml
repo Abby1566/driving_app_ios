@@ -1,18 +1,18 @@
 name: Build iOS IPA
 
 on:
-  workflow_dispatch: # 讓你可以在 GitHub 網頁手動點擊執行
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest # 借用 GitHub 的 Mac 伺服器
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4 # 升級到 v4
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.0' # 建議與你開發的版本接近
+          flutter-version: '3.16.0'
           channel: 'stable'
 
       - name: Install Dependencies
@@ -28,7 +28,7 @@ jobs:
           zip -r Runner.ipa Payload/
           
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # 關鍵修正：升級到 v4 以符合 GitHub 新規定
         with:
           name: ios-ipa
           path: Runner.ipa
