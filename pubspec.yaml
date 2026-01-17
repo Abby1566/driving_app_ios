@@ -4,7 +4,7 @@ publish_to: 'none'
 
 # 補上圖五要求的 SDK 限制
 environment:
-  sdk: '>=3.10.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0' # 放大相容範圍
 
 dependencies:
   flutter:
