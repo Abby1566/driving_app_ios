@@ -12,11 +12,12 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # 提高版本以符合 pubspec.yaml 的要求
-          channel: 'stable'
+          channel: 'stable' # 自動抓取最新穩定版
 
       - name: Install Dependencies
-        run: flutter pub get
+        run: |
+          flutter pub upgrade # 使用 upgrade 強制更新依賴清單
+          flutter pub get
 
       - name: Build iOS (No Sign)
         run: flutter build ios --release --no-codesign
