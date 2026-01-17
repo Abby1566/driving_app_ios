@@ -19,15 +19,18 @@ jobs:
           flutter pub upgrade
           flutter pub get
 
+      - name: Initialize iOS Project
+        # 關鍵修正：強迫 Flutter 在 Mac 環境生成遺失的 Podfile 與 iOS 配置
+        run: |
+          flutter build ios --config-only --no-codesign
+
       - name: Install CocoaPods
-        # 關鍵修正：進入 ios 資料夾安裝原生依賴
         run: |
           cd ios
           pod install
           cd ..
 
       - name: Build iOS (Simulator Mode)
-        # 加入 --debug 確保編譯通過，並移除簽名校驗
         run: flutter build ios --debug --no-codesign --simulator
 
       - name: Create IPA Payload
