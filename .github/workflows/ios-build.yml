@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    # 設定超時保護，如果 30 分鐘沒跑完自動中斷，不浪費時間
+    timeout-minutes: 30 
     steps:
       - uses: actions/checkout@v4
 
@@ -13,25 +15,16 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true # 開啟快取，加速下次編譯
 
       - name: Install Dependencies
         run: |
-          flutter pub upgrade
           flutter pub get
 
-      - name: Initialize iOS Project
-        # 關鍵修正：強迫 Flutter 在 Mac 環境生成遺失的 Podfile 與 iOS 配置
+      - name: Fast Build iOS (No Pods Sync)
+        # 使用 --no-pub 減少重複檢查，並直接指定模擬器架構
         run: |
-          flutter build ios --config-only --no-codesign
-
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
-          cd ..
-
-      - name: Build iOS (Simulator Mode)
-        run: flutter build ios --debug --no-codesign --simulator
+          flutter build ios --debug --no-codesign --simulator --no-pub
 
       - name: Create IPA Payload
         run: |
